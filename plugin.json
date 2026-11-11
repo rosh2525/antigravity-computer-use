@@ -1,0 +1,12 @@
+{
+  "name": "computer-use",
+  "displayName": "Computer Use",
+  "description": "Codex-style computer use for macOS: the agent reads any app through its accessibility tree and a screenshot, then clicks, types, scrolls and pastes by element in the background. You approve each app and can press Esc to stop it.",
+  "version": "1.0.0",
+  "logo": "assets/logo.png",
+  "suggestedPrompts": [
+    "Open Calculator and work out 1,284 × 37",
+    "In Notes, start a new note titled \"Groceries\" with milk, eggs and bread",
+    "Check my Calendar app and tell me what I have tomorrow"
+  ]
+}

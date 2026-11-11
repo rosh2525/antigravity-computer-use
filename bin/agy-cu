@@ -1,0 +1,15 @@
+#!/bin/sh
+# Launcher for the Computer Use helper inside AgyComputerUse.app.
+set -eu
+DIR="$(cd "$(dirname "$0")/.." && pwd)"
+BIN="$DIR/AgyComputerUse.app/Contents/MacOS/agy-cu"
+if [ ! -x "$BIN" ]; then
+  if [ "${1:-}" = "notify" ]; then
+    cat >/dev/null 2>&1 || true
+    echo '{"decision":"stop"}'
+    exit 0
+  fi
+  echo "AgyComputerUse.app is not built. Run: $DIR/scripts/install.sh" >&2
+  exit 1
+fi
+exec "$BIN" "$@"

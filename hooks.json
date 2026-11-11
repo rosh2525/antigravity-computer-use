@@ -1,0 +1,11 @@
+{
+  "computer-use-turn-ended": {
+    "Stop": [
+      {
+        "type": "command",
+        "command": "./bin/agy-cu notify turn-ended",
+        "timeout": 5
+      }
+    ]
+  }
+}

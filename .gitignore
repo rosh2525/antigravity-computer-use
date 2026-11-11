@@ -1,0 +1,11 @@
+# Build output
+src/.build/
+.AgyComputerUse.app.build/
+AgyComputerUse.app/
+dist/
+
+# Generated per machine by scripts/install.sh (contains an absolute path)
+mcp_config.json
+
+.DS_Store
+*.swp

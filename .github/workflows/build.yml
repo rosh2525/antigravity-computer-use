@@ -1,0 +1,16 @@
+name: build
+on:
+  push:
+  pull_request:
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: swift build -c release --package-path src
+      - name: MCP smoke test
+        run: |
+          BIN="$(swift build -c release --package-path src --show-bin-path)/agy-cu"
+          printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"ci","version":"0"}}}' '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' \
+            | "$BIN" mcp | python3 -c 'import sys,json; r=[json.loads(l) for l in sys.stdin]; n=len(r[1]["result"]["tools"]); print(n, "tools"); assert n == 11'

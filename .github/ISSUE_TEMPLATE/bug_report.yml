@@ -1,0 +1,48 @@
+name: Bug report
+description: Something in Computer Use didn't work as expected
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for reporting! Please remove anything private (names, emails, document contents) from logs and screenshots.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you asked the agent to do, what it did, and what you expected.
+    validations:
+      required: true
+  - type: input
+    id: app
+    attributes:
+      label: Target app
+      description: The app the agent was controlling (name and version if you know it).
+      placeholder: e.g. Notes 4.11, Google Chrome 142
+  - type: dropdown
+    id: tool
+    attributes:
+      label: Tool involved
+      multiple: true
+      options: [get_app_state, click, set_value, type_text, paste, press_key, scroll, drag, select_text, perform_secondary_action, list_apps, install / permissions, overlay / Esc, other]
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+      placeholder: e.g. 26.2 (Apple silicon)
+    validations:
+      required: true
+  - type: input
+    id: antigravity
+    attributes:
+      label: Antigravity version
+      placeholder: e.g. 2.28.2
+  - type: textarea
+    id: status
+    attributes:
+      label: Output of `bin/agy-cu status`
+      render: json
+  - type: textarea
+    id: log
+    attributes:
+      label: Relevant lines from ~/.gemini/antigravity/plugin_data/computer-use/service.log
+      render: text
