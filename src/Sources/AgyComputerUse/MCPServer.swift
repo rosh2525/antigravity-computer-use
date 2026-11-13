@@ -3,7 +3,7 @@ import Foundation
 /// Stdio MCP server (JSON-RPC 2.0, newline-delimited). Antigravity spawns this; every tool call is
 /// forwarded to the long-running service, which owns all macOS permissions and state.
 final class MCPServer {
-    static let serverVersion = "1.0.0"
+    static let serverVersion = "1.0.1"
 
     static let instructions = """
     Computer Use for macOS, modeled on Codex Computer Use. Work app by app: call get_app_state with an app \

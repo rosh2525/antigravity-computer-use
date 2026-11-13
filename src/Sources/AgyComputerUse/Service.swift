@@ -70,6 +70,12 @@ final class Service {
         "com.microsoft.edgemac", "org.chromium.Chromium", "com.vivaldi.Vivaldi", "company.thebrowser.Browser",
         "com.operasoftware.Opera",
     ]
+    /// Firefox-family apps only build their accessibility tree once an assistive client sets
+    /// AXEnhancedUserInterface; without it the window shows nothing but its title-bar buttons.
+    static let gecko: Set<String> = [
+        "org.mozilla.firefox", "org.mozilla.firefoxdeveloperedition", "org.mozilla.nightly",
+        "org.mozilla.thunderbird", "io.gitlab.librewolf-community", "app.zen-browser.zen", "net.waterfox.waterfox",
+    ]
 
     var isCancelled: Bool {
         stateLock.lock(); defer { stateLock.unlock() }
@@ -183,6 +189,7 @@ final class Service {
         case "select_text": return try selectText(args)
         case "set_value": return try setValue(args)
         case "type_text": return try typeText(args)
+        case "_debug_dump": return try debugDump(args)
         default: throw ToolError("Unknown tool \(name).")
         }
     }
@@ -255,13 +262,47 @@ final class Service {
         stateLock.unlock()
         guard first else { return }
         var changed = AX.set(el, "AXManualAccessibility", kCFBooleanTrue) == .success
-        if Self.chromium.contains(app.bundleID) {
+        let gecko = Self.gecko.contains(app.bundleID) || app.bundleID.hasPrefix("org.mozilla.")
+        if Self.chromium.contains(app.bundleID) || gecko {
             changed = AX.set(el, "AXEnhancedUserInterface", kCFBooleanTrue) == .success || changed
         }
-        if changed { usleep(800_000) }
+        guard changed else { return }
+        // Gecko builds its tree lazily after the switch; wait until the window has real content.
+        let deadline = Date().addingTimeInterval(gecko ? 4 : 0.8)
+        repeat {
+            usleep(200_000)
+            let w = AX.element(el, kAXFocusedWindowAttribute) ?? AX.elements(el, kAXWindowsAttribute).first
+            if !gecko || w.map({ AX.count($0, kAXChildrenAttribute) > 4 }) ?? true { break }
+        } while Date() < deadline
     }
 
     // MARK: Tools
+
+    /// Unfiltered raw AX dump for diagnosing apps whose tree comes back empty (not exposed over MCP).
+    private func debugDump(_ args: [String: Any]) throws -> ToolResult {
+        let app = try target(args)
+        let appEl = AXUIElementCreateApplication(app.pid)
+        enableAccessibility(app, appEl)
+        let maxDepth = args.int("depth") ?? 6
+        var lines: [String] = []
+        func dump(_ el: AXUIElement, _ d: Int) {
+            if lines.count > 400 { return }
+            let n = TreeBuilder.info(el)
+            let kids = AX.elements(el, kAXChildrenAttribute)
+            lines.append(String(repeating: "  ", count: d) + "\(n.role)\(n.subrole.map { "/" + $0 } ?? "") title=\(n.title ?? "-") desc=\(n.desc ?? "-") frame=\(n.frame.map { "\($0)" } ?? "-") kids=\(kids.count) attrsCount=\(AX.count(el, kAXChildrenAttribute))")
+            if d < maxDepth { for k in kids { dump(k, d + 1) } }
+        }
+        var names: CFArray?
+        AXUIElementCopyAttributeNames(appEl, &names)
+        lines.append("app attrs: \((names as? [String])?.joined(separator: ",") ?? "-")")
+        for w in AX.elements(appEl, kAXWindowsAttribute) {
+            var wn: CFArray?
+            AXUIElementCopyAttributeNames(w, &wn)
+            lines.append("window attrs: \((wn as? [String])?.joined(separator: ",") ?? "-")")
+            dump(w, 0)
+        }
+        return .text(lines.joined(separator: "\n"))
+    }
 
     private func listApps() -> ToolResult {
         let rows = AppResolver.listApps()
